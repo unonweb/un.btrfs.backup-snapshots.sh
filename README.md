@@ -15,6 +15,13 @@ ls -l /.snapshots/@name-of-origin-subvolume
 # 2025-12-20-040011
 ```
 
+USAGE
+=====
+
+```sh
+un.btrfs.backup /path/to/source/snapshots /path/to/dest/snapshots
+```
+
 NOTES
 =====
 
