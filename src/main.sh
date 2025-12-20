@@ -3,38 +3,6 @@
 set -o pipefail
 shopt -s nullglob
 
-# STATIC
-SCRIPT_PATH="$(readlink -f "${BASH_SOURCE}")"
-SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
-SCRIPT_DIR_NAME=$(dirname -- "$(readlink -f "${SCRIPT_DIR}")")
-SCRIPT_NAME=$(basename -- "$(readlink -f "${BASH_SOURCE}")")
-SCRIPT_PARENT=$(dirname "${SCRIPT_DIR}")
-CLEAR="\e[0m"
-BOLD="\e[1m"
-UNDERLINE="\e[4m"
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-BLUE="\e[34m"
-MAGENTA="\e[35m"
-CYAN="\e[36m"
-GREY="\e[38;5;248m"
-
-# CONFIG & DEFAULTS
-#BASE_DIR="/.snapshots"
-PATH_CONFIG="${SCRIPT_PARENT}/config.cfg"
-
-if [[ -r ${PATH_CONFIG} ]]; then
-	source "${PATH_CONFIG}"
-	
-else
-	echo "<4>WARN: No config file found at ${PATH_CONFIG}. Using defaults ..."
-	# DEFAULTS
-	# just in case $PATH_CONFIG cannot be read
-	BASE_DIR="/path/to/source/snapshots"  # Adjust this path
-	DEST_DIR="/path/to/destination/backups"  # Adjust this path
-fi
-
 function validate_snap_name { # ${name}
 
     local snapshot_name="${1}"
