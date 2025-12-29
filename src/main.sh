@@ -115,7 +115,7 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 		fi
 
 		if ! is_readonly "${snap_path}"; then
-            echo "<3>ERROR: Subvolume ${snap_name} is READ-WRITE. Btrfs send requires Read-Only. Skipping."
+            echo "<3>ERROR: Subvolume ${snap_path} is READ-WRITE. Btrfs send requires Read-Only. Skipping."
             continue
         fi
 		
