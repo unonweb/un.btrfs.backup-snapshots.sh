@@ -3,31 +3,14 @@
 set -o pipefail
 shopt -s nullglob
 
-function validate_snap_name { # ${name}
+export SCRIPT_PATH="$(readlink -f "${BASH_SOURCE}")"
+export SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
+export SCRIPT_NAME=$(basename -- "$(readlink -f "${BASH_SOURCE}")")
+export SCRIPT_PARENT=$(dirname "${SCRIPT_DIR}")
 
-    local snapshot_name="${1}"
-
-    if [[ ! "${snapshot_name}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}$ ]]; then
-        return 1
-    else
-		return 0
-	fi
-}
-
-function is_btrfs_subvolume { # ${path}
-	# must be run as root!
-	btrfs subvolume show "${1}" > /dev/null 2>&1
-}
-
-function is_readonly { # ${path}
-    # Returns 0 if subvolume is readonly, 1 otherwise
-    local path="${1}"
-    if [[ "$(btrfs property get -ts "${path}" ro)" == "ro=true" ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
+source "${SCRIPT_DIR}/lib/validate_snap_name.sh"
+source "${SCRIPT_DIR}/lib/is_btrfs_subvolume.sh"
+source "${SCRIPT_DIR}/lib/is_btrfs_subvol_readonly.sh"
 
 function main { # ${src_snaps_path} ${dst_snaps_path}
 	
@@ -114,7 +97,7 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 			continue
 		fi
 
-		if ! is_readonly "${snap_path}"; then
+		if ! is_btrfs_subvol_readonly "${snap_path}"; then
             echo "<3>ERROR: Subvolume ${snap_path} is READ-WRITE. Btrfs send requires Read-Only. Skipping."
             continue
         fi
