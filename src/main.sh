@@ -6,7 +6,6 @@
 # - DST_DIR_SNAPSHOTS
 
 set -o pipefail
-shopt -s nullglob
 
 export SCRIPT_PATH="$(readlink -f "${BASH_SOURCE}")"
 export SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
@@ -59,8 +58,10 @@ function main {
 		exit 1
 	fi
 	
+	shopt -s nullglob
 	local src_snaps=("${SRC_DIR_SNAPSHOTS}/"*)
 	local dst_snaps=("${DST_DIR_SNAPSHOTS}/"*)
+	shopt -u nullglob
 
 	if [[ ${#src_snaps[@]} -eq 0 ]]; then
 		echo "<3>ERROR: No snapshots found at: ${SRC_DIR_SNAPSHOTS}"
@@ -99,7 +100,7 @@ function main {
 		echo "<6>Checking snapshot: ${snap_name}"
 		
 		# validate subvol
-		if ! is_btrfs_subvolume ${snap_path}; then
+		if ! is_btrfs_subvolume "${snap_path}"; then
 			echo "<3>ERROR: Not a btrfs subvolume: ${snap_name}! Skipping."
 			continue
 		fi
