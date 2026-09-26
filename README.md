@@ -2,7 +2,7 @@ REQUIREMENTS
 ============
 
 This script expects **a directory with a timeline of snapshots of the same origin subvolume**.
-These snapshots must be named like `date +%Y-%m-%d-%H%M%S`.
+These snapshots must be named like: `date +%Y-%m-%d-%H%M%S`
 These snapshots must be readonly.
 
 Warning: If you ever manually flip a *destination* snapshot to read-write to change something, you will break the incremental chain. 
