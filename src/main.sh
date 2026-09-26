@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# ARGS
+# ====
+# - SRC_PATH_SNAPSHOTS
+# - DST_PATH_SNAPSHOTS
+
 set -o pipefail
 shopt -s nullglob
 
@@ -12,28 +17,30 @@ source "${SCRIPT_DIR}/lib/validate_snap_name.sh"
 source "${SCRIPT_DIR}/lib/is_btrfs_subvolume.sh"
 source "${SCRIPT_DIR}/lib/is_btrfs_subvol_readonly.sh"
 
-function main { # ${src_snaps_path} ${dst_snaps_path}
+local SRC_PATH_SNAPSHOTS="${1}"
+# /.snapshots/@var-lib-machines-dmz-db
+local DST_PATH_SNAPSHOTS="${2}"
+# /media/snapshots/@var-lib-machines-dmz-db
+
+function main {
 	
 	if [ "${UID}" -ne 0 ]; then
 		echo "<3>ERROR: This script must be run as root!"
 		exit 1
 	fi
 
-	local src_snaps_path="${1}" # /.snapshots/@var-lib-machines-dmz-db
-	local dst_snaps_path="${2}" # /media/snapshots/@var-lib-machines-dmz-db
-
-	if [[ -z ${src_snaps_path} ]]; then
-		echo "<3>ERROR: argument missing: src_snaps_path!"
+	if [[ -z ${SRC_PATH_SNAPSHOTS} ]]; then
+		echo "<3>ERROR: argument missing: SRC_PATH_SNAPSHOTS!"
 		exit 1
 	fi
 
-	if [[ -z ${dst_snaps_path} ]]; then
-		echo "<3>ERROR: argument missing: dst_snaps_path!"
+	if [[ -z ${DST_PATH_SNAPSHOTS} ]]; then
+		echo "<3>ERROR: argument missing: DST_PATH_SNAPSHOTS!"
 		exit 1
 	fi
 
-	local src_snaps_path_dirname=$(basename "${src_snaps_path}")
-	local dst_snaps_path_dirname=$(basename "${dst_snaps_path}")
+	local src_snaps_path_dirname=$(basename "${SRC_PATH_SNAPSHOTS}")
+	local dst_snaps_path_dirname=$(basename "${DST_PATH_SNAPSHOTS}")
 
 	# ensure src and dst have the same basename
 	if [[ "${src_snaps_path_dirname}" != "${dst_snaps_path_dirname}" ]]; then
@@ -42,21 +49,21 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 	fi
 
 	# ensure dest dir exists
-	if [[ ! -e ${dst_snaps_path} ]]; then
-		echo "<4>WARN: ${dst_snaps_path} does not exist. Mkdir ..."
-		mkdir -p "${dst_snaps_path}"	
+	if [[ ! -e ${DST_PATH_SNAPSHOTS} ]]; then
+		echo "<4>WARN: ${DST_PATH_SNAPSHOTS} does not exist. Mkdir ..."
+		mkdir -p "${DST_PATH_SNAPSHOTS}"	
 	fi
 	# ensure dest dir is writable
-	if [[ ! -w ${dst_snaps_path} ]]; then
-		echo "<3>ERROR: ${dst_snaps_path} not writable!"
+	if [[ ! -w ${DST_PATH_SNAPSHOTS} ]]; then
+		echo "<3>ERROR: ${DST_PATH_SNAPSHOTS} not writable!"
 		exit 1
 	fi
 	
-	local src_snaps=("${src_snaps_path}/"*)
-	local dst_snaps=("${dst_snaps_path}/"*)
+	local src_snaps=("${SRC_PATH_SNAPSHOTS}/"*)
+	local dst_snaps=("${DST_PATH_SNAPSHOTS}/"*)
 
 	if [[ ${#src_snaps[@]} -eq 0 ]]; then
-		echo "<3>ERROR: No snapshots found at: ${src_snaps_path}"
+		echo "<3>ERROR: No snapshots found at: ${SRC_PATH_SNAPSHOTS}"
 		exit 1
 	fi
 
@@ -111,7 +118,7 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 		
 		# If it already exists on destination, we skip sending, 
 		# but we MUST update prev_snap_path so the next one can use it as a parent.
-		if [[ -e "${dst_snaps_path}/${snap_name}" ]]; then
+		if [[ -e "${DST_PATH_SNAPSHOTS}/${snap_name}" ]]; then
 			echo "<6>Already present at destination: ${snap_name}"
 			prev_snap_path="${snap_path}"
 			continue
@@ -123,13 +130,13 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 			# first snapshot (cronologically)
 			# has not been transferred yet
 			echo "<6>No previous parent available. Performing full backup: ${snap_name}"
-			btrfs send "${snap_path}" | btrfs receive "${dst_snaps_path}"
+			btrfs send "${snap_path}" | btrfs receive "${DST_PATH_SNAPSHOTS}"
 
 			if [[ ${?} -eq 0 ]]; then
 				echo "<6>Successfully performed full backup of ${snap_name}"
 			else
                 echo "<3>ERROR: Full backup failed for ${snap_name}. Cleaning up..."
-                btrfs subvolume delete "${dst_snaps_path}/${snap_name}" 2>/dev/null
+                btrfs subvolume delete "${DST_PATH_SNAPSHOTS}/${snap_name}" 2>/dev/null
                 exit 1
             fi
 		else
@@ -138,12 +145,12 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 			
 			# We use -p with the LOCAL path of the previous snapshot. 
 			# Btrfs will find the matching subvolume on the destination using UUIDs.
-			btrfs send -p "${prev_snap_path}" "${snap_path}" | btrfs receive "${dst_snaps_path}"
+			btrfs send -p "${prev_snap_path}" "${snap_path}" | btrfs receive "${DST_PATH_SNAPSHOTS}"
 			if [[ ${?} -eq 0 ]]; then
 				echo "<6>Successfully performed incremental backup of ${snap_name} with parent ${prev_snap_name}"
 			else
                 echo "<3>ERROR: Incremental backup failed for ${snap_name} with parent ${prev_snap_name}. Cleaning up..."
-                btrfs subvolume delete "${dst_snaps_path}/${snap_name}" 2>/dev/null
+                btrfs subvolume delete "${DST_PATH_SNAPSHOTS}/${snap_name}" 2>/dev/null
                 exit 1
             fi
 		fi
@@ -157,4 +164,4 @@ function main { # ${src_snaps_path} ${dst_snaps_path}
 
 }
 
-main ${@}
+main
