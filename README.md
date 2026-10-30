@@ -1,3 +1,9 @@
+ABOUT
+=====
+
+The is an incremental backup script designed for Btrfs file systems. 
+It mirrors Btrfs snapshot directories from a source path to a destination path using **btrfs send** and **btrfs receive**.
+
 REQUIREMENTS
 ============
 
